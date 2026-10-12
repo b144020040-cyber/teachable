@@ -89,6 +89,13 @@
                     <span id="loadStatusText" class="text-sm text-slate-300 font-medium">正在載入模型並開啟鏡頭...</span>
                 </div>
 
+                <!-- GitHub Pages Deployment Tip -->
+                <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-700 text-xs text-slate-400 space-y-1">
+                    <p class="font-bold text-slate-300">💡 GitHub Pages 部署注意點：</p>
+                    <p>1. 瀏覽器必須在 <b>HTTPS</b> 安全連線下才允許存取鏡頭（GitHub Pages 預設支援）。</p>
+                    <p>2. 當瀏覽器彈出「是否允許存取相機」時，請務必點擊<b>允許 (Allow)</b>。</p>
+                </div>
+
                 <button onclick="initGameAndModel()" class="w-full py-4 bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-95 text-white font-bold rounded-xl shadow-lg shadow-rose-500/25 transition transform active:scale-95">
                     🚀 連線鏡頭並啟動遊戲設定
                 </button>
@@ -292,6 +299,12 @@
                 return;
             }
 
+            // Force HTTPS for GitHub Pages compatibility if http was used
+            if (urlInput.startsWith('http://')) {
+                urlInput = urlInput.replace('http://', 'https://');
+                document.getElementById('modelUrlInput').value = urlInput;
+            }
+
             if (!urlInput.endsWith('/')) {
                 urlInput += '/';
             }
@@ -301,7 +314,9 @@
 
             const statusContainer = document.getElementById('loadStatusContainer');
             const statusText = document.getElementById('loadStatusText');
+            const spinner = document.getElementById('loadingSpinner');
             statusContainer.classList.remove('hidden');
+            spinner.classList.remove('hidden');
             statusText.innerText = "正在連線下載 Pose AI 模型檔案...";
 
             try {
@@ -309,12 +324,12 @@
                 model = await tmPose.load(modelURL, metadataURL);
                 maxPredictions = model.getTotalClasses();
 
-                statusText.innerText = "正在啟動視訊鏡頭...";
+                statusText.innerText = "正在啟動視訊鏡頭 (請允許瀏覽器權限)...";
                 
                 // Setup webcam for pose estimation
                 const flip = true;
                 webcam = new tmPose.Webcam(320, 240, flip);
-                await webcam.setup();
+                await webcam.setup(); // Requests camera permissions
                 await webcam.play();
                 
                 const container = document.getElementById('webcamContainer');
@@ -353,7 +368,8 @@
 
             } catch (error) {
                 console.error(error);
-                statusText.innerText = "載入失敗：請確認網址正確或攝影機已授權。";
+                spinner.classList.add('hidden');
+                statusText.innerHTML = `❌ 啟動失敗：<br>1. 請檢查相機權限是否遭到瀏覽器封鎖。<br>2. 請確認 Teachable Machine 網址是否正確且公開。<br>3. 錯誤訊息: ${error.message || error}`;
             }
         }
 
