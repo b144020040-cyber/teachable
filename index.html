@@ -102,10 +102,14 @@
                 <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 flex items-center justify-between shadow-xl">
                     <div class="flex items-center gap-4">
                         <!-- Physical Traffic Light Element -->
-                        <div class="bg-slate-950 p-2.5 rounded-2xl border-2 border-slate-700 flex gap-3 items-center shadow-inner">
-                            <div id="lampRed" class="w-8 h-8 rounded-full bg-slate-800 transition-all duration-200"></div>
-                            <div id="lampYellow" class="w-8 h-8 rounded-full bg-slate-800 transition-all duration-200"></div>
-                            <div id="lampGreen" class="w-8 h-8 rounded-full bg-slate-800 transition-all duration-200"></div>
+                        <div class="bg-slate-950 p-2 rounded-2xl border-2 border-slate-700 flex gap-2 items-center shadow-inner">
+                            <div id="lampRed" class="w-7 h-7 rounded-full bg-slate-800 transition-all duration-200"></div>
+                            <div id="lampYellow" class="w-7 h-7 rounded-full bg-slate-800 transition-all duration-200"></div>
+                            <div id="lampGreen" class="w-7 h-7 rounded-full bg-slate-800 transition-all duration-200"></div>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-400 block font-semibold">當前號誌</span>
+                            <h3 id="lightStateText" class="text-base font-black text-emerald-400">綠燈 (繼續動作!)</h3>
                         </div>
                     </div>
                 </div>
@@ -123,12 +127,18 @@
                 </div>
 
                 <!-- Game Actions -->
-                <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 flex items-center justify-center gap-3 shadow-xl">
-                    <button onclick="resetGame()" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold rounded-xl transition">
-                        🔄 重新開始
+                <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 flex items-center justify-center gap-2 shadow-xl">
+                    <button id="startPlayBtn" onclick="startPlayGame()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition flex items-center gap-1 shadow-lg shadow-emerald-600/30">
+                        <span>▶️</span> <span>開始遊戲</span>
                     </button>
-                    <button onclick="quitToSetup()" class="px-4 py-2.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs font-bold rounded-xl transition">
-                        🚪 離開遊戲
+                    <button id="pauseBtn" onclick="togglePauseGame()" class="hidden px-3.5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition flex items-center gap-1">
+                        <span>⏸️</span> <span id="pauseBtnText">暫停</span>
+                    </button>
+                    <button onclick="resetGame()" class="px-3.5 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold rounded-xl transition flex items-center gap-1">
+                        <span>🔄</span> 重置
+                    </button>
+                    <button onclick="quitToSetup()" class="px-3.5 py-2.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs font-bold rounded-xl transition">
+                        🚪 離開
                     </button>
                 </div>
             </div>
@@ -136,6 +146,23 @@
             <!-- Arena Canvas Field with Custom Background -->
             <div class="game-bg border-2 border-slate-700 rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[340px] items-center">
                 
+                <!-- Ready/Start Overlay -->
+                <div id="readyOverlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center">
+                    <div class="text-5xl mb-3 animate-bounce">🎮</div>
+                    <div class="text-2xl font-black text-white tracking-widest mb-2">準備好了嗎？</div>
+                    <p class="text-xs text-slate-300 mb-5">請站在鏡頭前，準備好動作後點擊下方按鈕開始！</p>
+                    <button onclick="startPlayGame()" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 text-white font-black text-sm rounded-xl shadow-xl shadow-emerald-500/30 transition transform active:scale-95 flex items-center gap-2">
+                        <span>▶️</span> 立即開始遊戲
+                    </button>
+                </div>
+
+                <!-- Pause Overlay Indicator -->
+                <div id="pauseOverlay" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm z-30 hidden flex flex-col items-center justify-center">
+                    <div class="text-5xl mb-2 animate-bounce">⏸️</div>
+                    <div class="text-2xl font-black text-white tracking-widest mb-1">遊戲暫停中</div>
+                    <p class="text-xs text-slate-400">點擊「繼續遊戲」按鈕恢復動作辨識與關卡進行</p>
+                </div>
+
                 <!-- Monster Area -->
                 <div id="monsterArea" class="h-32 flex flex-col items-center justify-center relative">
                     <div id="monsterContainer" class="hidden flex-col items-center">
@@ -238,11 +265,15 @@
         // Game variables & constants
         let model, webcam, maxPredictions = 0;
         let gameActive = false;
+        let isPaused = false;
+        let gameStarted = false; // Track if game has officially started by user click
         let lives = 3;
         let progress = 0; // 0 to 100
         let lightState = 'GREEN'; // 'GREEN', 'YELLOW', 'RED'
-        let timerSeconds = 0;
         let timerInterval = null;
+        let lightTimeoutId = null;
+        let remainingLightTime = 0;
+        let lightStartTime = 0;
         let gameLoopId = null;
         let isMoving = false; // Player motion state
 
@@ -316,8 +347,12 @@
                 document.getElementById('setupView').classList.add('hidden');
                 document.getElementById('gameView').classList.remove('hidden');
 
-                // Start Game State
-                startGameLoop();
+                // Start webcam prediction loop
+                if (gameLoopId) cancelAnimationFrame(gameLoopId);
+                window.requestAnimationFrame(predictionLoop);
+
+                // Initial setup to ready state (waiting for user click start)
+                resetGame();
 
             } catch (error) {
                 console.error(error);
@@ -325,26 +360,57 @@
             }
         }
 
-        function startGameLoop() {
+        // Triggered when clicking "Start Game" button
+        function startPlayGame() {
+            gameStarted = true;
             gameActive = true;
-            lives = 3;
-            progress = 0;
-            updateLivesDisplay();
-            updateProgressDisplay();
+            isPaused = false;
             
-            // Start prediction loop
-            window.requestAnimationFrame(predictionLoop);
-
-            // Start Traffic Light Cycle (Starts with Green)
+            document.getElementById('readyOverlay').classList.add('hidden');
+            document.getElementById('startPlayBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            
+            updatePauseUI();
             setLightState('GREEN');
         }
 
+        function togglePauseGame() {
+            if (!gameActive && !isPaused) return;
+
+            isPaused = !isPaused;
+            updatePauseUI();
+
+            if (isPaused) {
+                // Save remaining light time and pause timer
+                const elapsed = Date.now() - lightStartTime;
+                remainingLightTime = Math.max(0, remainingLightTime - elapsed);
+                clearTimeout(lightTimeoutId);
+                clearInterval(timerInterval);
+                document.getElementById('playerAvatar').classList.remove('character-moving');
+            } else {
+                // Resume game timer with remaining duration
+                lightStartTime = Date.now();
+                scheduleNextLight(remainingLightTime);
+            }
+        }
+
+        function updatePauseUI() {
+            const pauseBtnText = document.getElementById('pauseBtnText');
+            const pauseOverlay = document.getElementById('pauseOverlay');
+            if (isPaused) {
+                if (pauseBtnText) pauseBtnText.innerText = "繼續";
+                if (pauseOverlay) pauseOverlay.classList.remove('hidden');
+            } else {
+                if (pauseBtnText) pauseBtnText.innerText = "暫停";
+                if (pauseOverlay) pauseOverlay.classList.add('hidden');
+            }
+        }
+
         async function predictionLoop() {
-            if (!gameActive) return;
-
-            webcam.update();
-            await predict();
-
+            if (webcam) {
+                webcam.update();
+                await predict();
+            }
             gameLoopId = window.requestAnimationFrame(predictionLoop);
         }
 
@@ -385,12 +451,11 @@
             // Evaluate if user is moving (Confidence threshold > 60%)
             isMoving = (forwardProb > 0.60);
 
-            // Apply game movement or check failure
-            if (gameActive) {
+            // Apply game movement or check failure only when game is actively running
+            if (gameActive && gameStarted && !isPaused) {
                 if (lightState === 'GREEN') {
-                    // Under GREEN light: Character MUST keep moving. Computer moves player forward if action detected!
                     if (isMoving) {
-                        progress += 0.45; // Auto-advance progress by computer
+                        progress += 0.45; // Auto-advance progress
                         document.getElementById('playerAvatar').classList.add('character-moving');
                         if (progress >= 100) {
                             progress = 100;
@@ -401,7 +466,6 @@
                     }
                     updateProgressDisplay();
                 } else if (lightState === 'YELLOW') {
-                    // Under YELLOW light: Optional to move or stop
                     if (isMoving) {
                         progress += 0.35;
                         document.getElementById('playerAvatar').classList.add('character-moving');
@@ -414,7 +478,6 @@
                         document.getElementById('playerAvatar').classList.remove('character-moving');
                     }
                 } else if (lightState === 'RED') {
-                    // Under RED light: MUST STOP! If moving -> Eaten by monster!
                     document.getElementById('playerAvatar').classList.remove('character-moving');
                     if (isMoving) {
                         triggerEatenByMonster();
@@ -424,7 +487,7 @@
         }
 
         function setLightState(newState) {
-            if (!gameActive) return;
+            if (!gameActive || !gameStarted) return;
 
             lightState = newState;
             const lampRed = document.getElementById('lampRed');
@@ -470,40 +533,25 @@
                 duration = Math.floor(Math.random() * 1500) + 2000;
             }
 
-            // Start countdown timer internally
-            let remainingMs = duration;
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                remainingMs -= 100;
-
-                if (remainingMs <= 0) {
-                    clearInterval(timerInterval);
-                    // Cycle to next light state: GREEN -> YELLOW -> RED -> GREEN
-                    if (lightState === 'GREEN') setLightState('YELLOW');
-                    else if (lightState === 'YELLOW') setLightState('RED');
-                    else if (lightState === 'RED') setLightState('GREEN');
-                }
-            }, 100);
+            remainingLightTime = duration;
+            lightStartTime = Date.now();
+            scheduleNextLight(duration);
         }
 
-        // Start countdown timer internally
-        let remainingMs = duration;
-        clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-            remainingMs -= 100;
+        function scheduleNextLight(delay) {
+            clearTimeout(lightTimeoutId);
+            lightTimeoutId = setTimeout(() => {
+                if (!gameActive || !gameStarted || isPaused) return;
 
-            if (remainingMs <= 0) {
-                clearInterval(timerInterval);
                 // Cycle to next light state: GREEN -> YELLOW -> RED -> GREEN
                 if (lightState === 'GREEN') setLightState('YELLOW');
                 else if (lightState === 'YELLOW') setLightState('RED');
                 else if (lightState === 'RED') setLightState('GREEN');
-            }
-        }, 100);
-    }
+            }, delay);
+        }
 
-    function triggerEatenByMonster() {
-            if (!gameActive) return;
+        function triggerEatenByMonster() {
+            if (!gameActive || !gameStarted || isPaused) return;
 
             // Player character disappears
             const avatar = document.getElementById('playerAvatar');
@@ -513,14 +561,14 @@
             updateLivesDisplay();
 
             gameActive = false;
-            clearInterval(timerInterval);
+            clearTimeout(lightTimeoutId);
 
             setTimeout(() => {
                 if (lives <= 0) {
                     toggleModal('gameOverModal', true);
                 } else {
                     alert(`😱 你在紅燈時偷動被怪物吃掉了！角色消失！剩餘生命：${lives}`);
-                    // Respawn player and resume
+                    // Respawn player and return to green light
                     avatar.style.opacity = '1';
                     gameActive = true;
                     setLightState('GREEN');
@@ -542,29 +590,45 @@
 
         function triggerVictory() {
             gameActive = false;
-            clearInterval(timerInterval);
+            clearTimeout(lightTimeoutId);
             toggleModal('victoryModal', true);
         }
 
         function resetGame() {
             gameActive = false;
-            clearInterval(timerInterval);
+            gameStarted = false;
+            isPaused = false;
+            clearTimeout(lightTimeoutId);
+            
             lives = 3;
             progress = 0;
+            
             const avatar = document.getElementById('playerAvatar');
             avatar.style.opacity = '1';
+            avatar.classList.remove('character-moving');
+            
             updateLivesDisplay();
             updateProgressDisplay();
-            
-            if (webcam) {
-                gameActive = true;
-                setLightState('GREEN');
-            }
+
+            // Reset light visual lamps
+            document.getElementById('lampRed').className = "w-8 h-8 rounded-full bg-slate-800 transition-all duration-200";
+            document.getElementById('lampYellow').className = "w-8 h-8 rounded-full bg-slate-800 transition-all duration-200";
+            document.getElementById('lampGreen').className = "w-8 h-8 rounded-full bg-slate-800 transition-all duration-200";
+            document.getElementById('monsterContainer').classList.add('hidden');
+            document.getElementById('safeIndicator').classList.remove('hidden');
+
+            // Show Ready Overlay & Start Button
+            document.getElementById('readyOverlay').classList.remove('hidden');
+            document.getElementById('startPlayBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            document.getElementById('pauseOverlay').classList.add('hidden');
         }
 
         function quitToSetup() {
             gameActive = false;
-            clearInterval(timerInterval);
+            gameStarted = false;
+            isPaused = false;
+            clearTimeout(lightTimeoutId);
             if (webcam) webcam.stop();
             document.getElementById('gameView').classList.add('hidden');
             document.getElementById('setupView').classList.remove('hidden');
