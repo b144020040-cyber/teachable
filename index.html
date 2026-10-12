@@ -14,14 +14,12 @@
     <style>
         body { font-family: 'Noto Sans TC', 'Inter', sans-serif; }
         
-        /* Game Field Background using custom provided image */
         .game-bg {
             background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSigWp5yFglYsAQGLUpUNFLzT_5PSJH9FHY3lsBfoN2nw&s=10');
             background-size: cover;
             background-position: center;
         }
 
-        /* Physical Traffic Light Glow Animations */
         .light-glow-green { box-shadow: 0 0 25px #10b981, inset 0 0 10px #10b981; }
         .light-glow-yellow { box-shadow: 0 0 25px #f59e0b, inset 0 0 10px #f59e0b; }
         .light-glow-red { box-shadow: 0 0 30px #ef4444, inset 0 0 10px #ef4444; }
@@ -34,7 +32,6 @@
             animation: pulse-monster 0.8s infinite ease-in-out;
         }
 
-        /* Character Jump Animation when moving */
         @keyframes char-move {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-6px); }
@@ -61,7 +58,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <button onclick="toggleModal('rulesModal', true)" class="px-3.5 py-1.5 text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl transition">
-                    📖 遊戲規則
+                    📖 動作姿勢指南與規則
                 </button>
             </div>
         </div>
@@ -69,7 +66,6 @@
 
     <main class="flex-grow max-w-6xl w-full mx-auto p-4 flex flex-col justify-center items-center">
 
-        <!-- Stage 1: Model Setup View -->
         <div id="setupView" class="w-full max-w-xl bg-slate-800/95 border border-slate-700 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md">
             <div class="text-center mb-6">
                 <span class="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded-full mb-2 uppercase tracking-wider">Step 1</span>
@@ -89,10 +85,9 @@
                     <span id="loadStatusText" class="text-sm text-slate-300 font-medium">正在載入模型並開啟鏡頭...</span>
                 </div>
 
-                <!-- GitHub Pages Deployment Tip -->
                 <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-700 text-xs text-slate-400 space-y-1">
-                    <p class="font-bold text-slate-300">💡 GitHub Pages 部署注意點：</p>
-                    <p>1. 瀏覽器必須在 <b>HTTPS</b> 安全連線下才允許存取鏡頭（GitHub Pages 預設支援）。</p>
+                    <p class="font-bold text-slate-300">💡 部署與權限注意點：</p>
+                    <p>1. 瀏覽器必須在安全連線下才允許存取鏡頭。</p>
                     <p>2. 當瀏覽器彈出「是否允許存取相機」時，請務必點擊<b>允許 (Allow)</b>。</p>
                 </div>
 
@@ -102,16 +97,13 @@
             </div>
         </div>
 
-        <!-- Stage 2: Game Screen -->
         <div id="gameView" class="hidden w-full max-w-5xl flex flex-col gap-5">
             
-            <!-- Dashboard Controls -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 
-                <!-- Traffic Light Icon-Only Display Box -->
+                <!-- Traffic Light Box (No text) -->
                 <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 flex items-center justify-center shadow-xl">
                     <div class="flex items-center gap-4">
-                        <!-- Physical Traffic Light Element without text -->
                         <div class="bg-slate-950 p-2.5 rounded-2xl border-2 border-slate-700 flex gap-3 items-center shadow-inner">
                             <div id="lampRed" class="w-8 h-8 rounded-full bg-slate-800 transition-all duration-200"></div>
                             <div id="lampYellow" class="w-8 h-8 rounded-full bg-slate-800 transition-all duration-200"></div>
@@ -120,7 +112,7 @@
                     </div>
                 </div>
 
-                <!-- Lives & Progress Display -->
+                <!-- Lives & Progress -->
                 <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 flex items-center justify-between shadow-xl">
                     <div>
                         <span class="text-xs text-slate-400 block font-semibold">剩餘挑戰次數</span>
@@ -132,7 +124,7 @@
                     </div>
                 </div>
 
-                <!-- Game Control Action Buttons -->
+                <!-- Game Controls -->
                 <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 flex items-center justify-center gap-2 shadow-xl">
                     <button id="startPlayBtn" onclick="startPlayGame()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition flex items-center gap-1 shadow-lg shadow-emerald-600/30">
                         <span>▶️</span> <span>開始遊戲</span>
@@ -149,27 +141,58 @@
                 </div>
             </div>
 
-            <!-- Arena Canvas Field with Custom Background -->
-            <div class="game-bg border-2 border-slate-700 rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[340px] items-center">
+            <!-- Arena Field -->
+            <div class="game-bg border-2 border-slate-700 rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[380px] items-center">
                 
-                <!-- Ready/Start Overlay -->
-                <div id="readyOverlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center">
-                    <div class="text-5xl mb-3 animate-bounce">🎮</div>
-                    <div class="text-2xl font-black text-white tracking-widest mb-2">準備好了嗎？</div>
-                    <p class="text-xs text-slate-300 mb-5">請站在鏡頭前，點擊下方按鈕開始遊戲！</p>
-                    <button onclick="startPlayGame()" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 text-white font-black text-sm rounded-xl shadow-xl shadow-emerald-500/30 transition transform active:scale-95 flex items-center gap-2">
-                        <span>▶️</span> 立即開始遊戲
-                    </button>
+                <!-- Ready & Rules Overlay -->
+                <div id="readyOverlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md z-30 p-6 flex flex-col items-center justify-between overflow-y-auto">
+                    <div class="text-center my-auto max-w-2xl">
+                        <div class="text-4xl mb-2 animate-bounce">🎮</div>
+                        <h2 class="text-2xl font-black text-white tracking-wide mb-1">準備好了嗎？肢體動作指南</h2>
+                        <p class="text-xs text-amber-400 font-semibold mb-4">請嚴格遵守二階段燈號指令進行挑戰！</p>
+                        
+                        <!-- Pose Cards Container (2 columns) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left mb-5">
+                            <div class="bg-slate-800/90 border border-emerald-500/40 p-4 rounded-2xl">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-2xl">🏃</span>
+                                    <h3 class="font-bold text-emerald-400 text-sm">前進姿勢</h3>
+                                </div>
+                                <p class="text-xs text-slate-300 leading-relaxed font-semibold">手臂彎曲平舉（如棒球比賽 Out 的手勢）</p>
+                                <span class="inline-block mt-3 text-[11px] bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full font-bold">🟢 綠燈/黃燈時推進角色</span>
+                            </div>
+
+                            <div class="bg-slate-800/90 border border-rose-500/40 p-4 rounded-2xl">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-2xl">🛑</span>
+                                    <h3 class="font-bold text-rose-400 text-sm">停下指令</h3>
+                                </div>
+                                <p class="text-xs text-slate-300 leading-relaxed font-semibold">手肘平行胸口（保持靜止不要移動）</p>
+                                <span class="inline-block mt-3 text-[11px] bg-rose-500/20 text-rose-300 px-2.5 py-1 rounded-full font-bold">🔴 紅燈時必須保持此姿勢</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700 text-xs text-slate-400 mb-5 text-left space-y-1">
+                            <p class="font-bold text-slate-200">📜 燈號與規則說明：</p>
+                            <p>• 🟢 <b>綠燈</b>（隨機 1~3 秒）：做「前進」姿勢推進角色！</p>
+                            <p>• 🟡 <b>黃燈</b>（隨機 1~2 秒）：緩衝期，可選擇繼續前進或停下。</p>
+                            <p>• 🔴 <b>紅燈</b>：怪物現身！必須做「停下指令」保持不動，若未停下會被怪物瞬間吃掉！</p>
+                        </div>
+
+                        <button onclick="startPlayGame()" class="px-8 py-3.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 hover:opacity-95 text-white font-black text-base rounded-2xl shadow-xl shadow-emerald-500/30 transition transform active:scale-95 flex items-center gap-2 mx-auto">
+                            <span>▶️</span> 點擊開始遊戲
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Pause Overlay Indicator -->
+                <!-- Pause Overlay -->
                 <div id="pauseOverlay" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm z-30 hidden flex flex-col items-center justify-center">
                     <div class="text-5xl mb-2 animate-bounce">⏸️</div>
                     <div class="text-2xl font-black text-white tracking-widest mb-1">遊戲暫停中</div>
                     <p class="text-xs text-slate-400">點擊「繼續」按鈕恢復遊戲</p>
                 </div>
 
-                <!-- Monster Display Area -->
+                <!-- Monster Area -->
                 <div id="monsterArea" class="h-32 flex flex-col items-center justify-center relative">
                     <div id="monsterContainer" class="hidden flex-col items-center">
                         <img id="monsterImage" src="" alt="Monster" class="h-28 w-28 object-contain drop-shadow-[0_10px_20px_rgba(239,68,68,0.8)] monster-active">
@@ -177,7 +200,7 @@
                     </div>
                 </div>
 
-                <!-- Player Progress Bar Track -->
+                <!-- Progress Track -->
                 <div class="w-full max-w-3xl bg-slate-900/80 backdrop-blur p-4 rounded-2xl border border-slate-700/80 shadow-2xl my-2">
                     <div class="flex justify-between text-xs font-bold text-slate-400 mb-2">
                         <span>起點 🏃</span>
@@ -185,7 +208,6 @@
                     </div>
                     <div class="w-full bg-slate-950 h-10 rounded-xl p-1.5 border border-slate-800 relative flex items-center">
                         <div id="progressBarFill" class="bg-gradient-to-r from-amber-500 via-rose-500 to-emerald-500 h-full rounded-lg transition-all duration-100 relative" style="width: 0%;">
-                            <!-- Player Avatar Inside Track -->
                             <div id="playerAvatar" class="absolute -right-4 -top-3 text-3xl transition-opacity duration-300 filter drop-shadow">
                                 🧍
                             </div>
@@ -194,9 +216,8 @@
                 </div>
             </div>
 
-            <!-- Webcam and AI Detection Dashboard -->
+            <!-- Webcam & AI Panel -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <!-- Webcam Container Box -->
                 <div class="bg-slate-800/90 border border-slate-700 rounded-3xl p-4 shadow-xl flex flex-col items-center">
                     <h3 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> 視訊鏡頭 AI 骨架即時偵測
@@ -204,13 +225,10 @@
                     <div id="webcamContainer" class="rounded-2xl overflow-hidden border border-slate-700 bg-slate-900 w-full flex justify-center items-center aspect-[4/3] max-h-[220px]"></div>
                 </div>
 
-                <!-- AI Predictions Visual Bar Display -->
                 <div class="bg-slate-800/90 border border-slate-700 rounded-3xl p-4 shadow-xl flex flex-col justify-between">
                     <div>
                         <h3 class="text-xs font-bold text-slate-300 mb-3">AI 動作辨識結果</h3>
-                        <div id="label-container" class="space-y-3">
-                            <!-- Class probability bars injected dynamically -->
-                        </div>
+                        <div id="label-container" class="space-y-3"></div>
                     </div>
                     <div class="mt-3 p-3 bg-slate-900/90 rounded-xl border border-slate-700 text-xs text-slate-400 flex items-center justify-between">
                         <span>當前辨識動作：</span>
@@ -226,11 +244,16 @@
     <!-- Rules Modal -->
     <div id="rulesModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
-            <h3 class="text-xl font-black text-white mb-4">📖 遊戲規則與燈號說明</h3>
+            <h3 class="text-xl font-black text-white mb-4">📖 姿勢說明與遊戲規則</h3>
             <div class="space-y-3 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                <p>1. 🟢 <b>綠燈階段 (1~3秒隨機)</b>：玩家必須<b>持續動作</b>（前進類別），角色將自動向前推進！</p>
-                <p>2. 🟡 <b>黃燈階段 (1~2秒隨機)</b>：緩衝警告！可選擇提前停下或繼續衝刺。</p>
-                <p>3. 🔴 <b>紅燈階段</b>：<b>必須完全停下動作！</b>怪物會隨機跳出。若在紅燈時仍在動作，角色將會被怪物瞬間吞噬！</p>
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700">
+                    <p class="font-bold text-emerald-400">🏃 前進姿勢：</p>
+                    <p>手臂彎曲平舉（如棒球比賽 Out 手勢），綠燈與黃燈時可持續前進推進角色！</p>
+                </div>
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700">
+                    <p class="font-bold text-rose-400">🛑 停下指令：</p>
+                    <p>手肘平行胸口且身體保持靜止，紅燈時必須保持此姿勢才不會被怪獸吃掉！</p>
+                </div>
             </div>
             <div class="mt-6 text-right">
                 <button onclick="toggleModal('rulesModal', false)" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold rounded-xl transition">
@@ -265,21 +288,19 @@
     </div>
 
     <script>
-        // Game state variables and settings for tmPose
         let model, webcam, ctx, maxPredictions = 0;
         let gameActive = false;
         let isPaused = false;
         let gameStarted = false;
         let lives = 3;
-        let progress = 0; // 0 to 100%
-        let lightState = 'GREEN'; // 'GREEN', 'YELLOW', 'RED'
+        let progress = 0;
+        let lightState = 'GREEN';
         let lightTimeoutId = null;
         let remainingLightTime = 0;
         let lightStartTime = 0;
         let gameLoopId = null;
         let isMoving = false;
 
-        // Monster Images list
         const MONSTER_IMAGES = [
             'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSSMk0pL4WvjKMBra_yZaoTFALPYpHUvhqH8UnU5XEMfA&s=10',
             'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDBSTaEJqFU6v1xxFAqmDaVUYdk_dZvJd3Liwb5GjURQ&s=10'
@@ -291,15 +312,12 @@
             else modal.classList.add('hidden');
         }
 
-        // Initialize Teachable Machine Pose Model & Webcam
         async function initGameAndModel() {
             let urlInput = document.getElementById('modelUrlInput').value.trim();
             if (!urlInput) {
-                alert('請先輸入 Teachable Machine 模型網址！');
                 return;
             }
 
-            // Force HTTPS for GitHub Pages compatibility if http was used
             if (urlInput.startsWith('http://')) {
                 urlInput = urlInput.replace('http://', 'https://');
                 document.getElementById('modelUrlInput').value = urlInput;
@@ -320,16 +338,14 @@
             statusText.innerText = "正在連線下載 Pose AI 模型檔案...";
 
             try {
-                // Load Teachable Machine Pose model
                 model = await tmPose.load(modelURL, metadataURL);
                 maxPredictions = model.getTotalClasses();
 
                 statusText.innerText = "正在啟動視訊鏡頭 (請允許瀏覽器權限)...";
                 
-                // Setup webcam for pose estimation
                 const flip = true;
                 webcam = new tmPose.Webcam(320, 240, flip);
-                await webcam.setup(); // Requests camera permissions
+                await webcam.setup();
                 await webcam.play();
                 
                 const container = document.getElementById('webcamContainer');
@@ -337,7 +353,6 @@
                 container.appendChild(webcam.canvas);
                 ctx = webcam.canvas.getContext('2d');
 
-                // Setup dynamic class prediction bars UI
                 const labelContainer = document.getElementById('label-container');
                 labelContainer.innerHTML = '';
                 for (let i = 0; i < maxPredictions; i++) {
@@ -355,21 +370,18 @@
                     labelContainer.appendChild(div);
                 }
 
-                // Switch setup screen to main game screen
                 document.getElementById('setupView').classList.add('hidden');
                 document.getElementById('gameView').classList.remove('hidden');
 
-                // Start AI prediction frame loop
                 if (gameLoopId) cancelAnimationFrame(gameLoopId);
                 window.requestAnimationFrame(predictionLoop);
 
-                // Initialize game to ready state
                 resetGame();
 
             } catch (error) {
                 console.error(error);
                 spinner.classList.add('hidden');
-                statusText.innerHTML = `❌ 啟動失敗：<br>1. 請檢查相機權限是否遭到瀏覽器封鎖。<br>2. 請確認 Teachable Machine 網址是否正確且公開。<br>3. 錯誤訊息: ${error.message || error}`;
+                statusText.innerHTML = `❌ 啟動失敗：請檢查相機權限與網址是否正確。`;
             }
         }
 
@@ -426,15 +438,13 @@
         async function predict() {
             if (!model || !webcam) return;
 
-            // Estimate pose from webcam canvas
             const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-            
-            // Run prediction on posenet output tensor
             const prediction = await model.predict(posenetOutput);
             
             let highestProb = 0;
             let detectedClassName = "";
             let forwardProb = 0;
+            let stopProb = 0;
 
             for (let i = 0; i < maxPredictions; i++) {
                 const className = prediction[i].className;
@@ -449,8 +459,11 @@
                 if (barEl) barEl.style.width = (probability * 100) + '%';
 
                 const lowerName = className.toLowerCase();
-                if (lowerName.includes('前進') || lowerName.includes('動') || lowerName.includes('forward') || lowerName.includes('move') || lowerName.includes('go')) {
+                
+                if (lowerName.includes('前進') || lowerName.includes('out') || lowerName.includes('forward') || lowerName.includes('move') || lowerName.includes('go')) {
                     forwardProb = probability;
+                } else if (lowerName.includes('停') || lowerName.includes('胸') || lowerName.includes('stop') || lowerName.includes('hold') || lowerName.includes('stay')) {
+                    stopProb = probability;
                 }
 
                 if (probability > highestProb) {
@@ -461,8 +474,8 @@
 
             document.getElementById('currentDetectedAction').innerText = `${detectedClassName} (${(highestProb*100).toFixed(0)}%)`;
 
-            // Evaluate movement
-            isMoving = (forwardProb > 0.60);
+            // Movement logic strictly based on Forward vs Stop
+            isMoving = (forwardProb > 0.55) && !(stopProb > 0.65);
 
             if (gameActive && gameStarted && !isPaused) {
                 if (lightState === 'GREEN') {
@@ -497,7 +510,6 @@
                 }
             }
 
-            // Draw pose keypoints on canvas if context exists
             if (pose && ctx) {
                 tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
                 tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
@@ -523,19 +535,16 @@
             if (newState === 'GREEN') {
                 lampGreen.className = "w-8 h-8 rounded-full bg-emerald-500 light-glow-green transition-all duration-200";
                 monsterContainer.classList.add('hidden');
-                // Green light duration: 1 to 3 seconds randomly
                 duration = Math.floor(Math.random() * 2000) + 1000;
             } else if (newState === 'YELLOW') {
                 lampYellow.className = "w-8 h-8 rounded-full bg-amber-400 light-glow-yellow transition-all duration-200";
                 monsterContainer.classList.add('hidden');
-                // Yellow light duration: 1 to 2 seconds randomly
                 duration = Math.floor(Math.random() * 1000) + 1000;
             } else if (newState === 'RED') {
                 lampRed.className = "w-8 h-8 rounded-full bg-rose-500 light-glow-red transition-all duration-200";
                 const randomImg = MONSTER_IMAGES[Math.floor(Math.random() * MONSTER_IMAGES.length)];
                 monsterImage.src = randomImg;
                 monsterContainer.classList.remove('hidden');
-                // Red light duration: 2 to 3.5 seconds
                 duration = Math.floor(Math.random() * 1500) + 2000;
             }
 
@@ -571,7 +580,6 @@
                 if (lives <= 0) {
                     toggleModal('gameOverModal', true);
                 } else {
-                    alert(`😱 紅燈時偷動被怪物吃掉了！角色消失！剩餘生命：${lives}`);
                     avatar.style.opacity = '1';
                     gameActive = true;
                     setLightState('GREEN');
